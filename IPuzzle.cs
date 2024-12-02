@@ -1,3 +1,3 @@
 interface IPuzzle{
-    void Excute();
+    void Excute(FileInfo input);
 }

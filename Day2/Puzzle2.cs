@@ -8,12 +8,12 @@ class Puzzle2 : IPuzzle
     const int Increasing = 1;
     const int Decreasing = -1;
 
-    public void Excute()
+    public void Excute(FileInfo input)
     {
 #if Sample
         var lines = sample.Split("\r\n");
 #else
-        var lines = File.ReadAllLines("Day2\\input.txt");
+        var lines = File.ReadAllLines(input.FullName);
 #endif
 
 
@@ -42,7 +42,8 @@ class Puzzle2 : IPuzzle
                 continue;
             }
 
-            if (IsSafeByRemovingOne(levels)){
+            if (IsSafeByRemovingOne(levels))
+            {
                 result++;
                 System.Console.WriteLine(report);
 

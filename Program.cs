@@ -1,13 +1,15 @@
 ﻿using System.Reflection;
 
-var lastPuzzleType = Assembly.GetEntryAssembly()
+var lastPuzzle = Assembly.GetEntryAssembly()
                              .GetTypes()
                              .Where(t => typeof(IPuzzle).IsAssignableFrom(t) && t.IsClass)
-                             .OrderByDescending(t => int.Parse(t.Name[6..]))
+                             .Select(type => (type, num: int.Parse(type.Name[6..])))
+                             .OrderByDescending(t => t.num)
                              .First();
 
-var puzzle = (IPuzzle)Activator.CreateInstance(lastPuzzleType);
+var puzzle = (IPuzzle)Activator.CreateInstance(lastPuzzle.type);
 
+var input = new FileInfo($"Day{lastPuzzle.num}\\input.txt");
+System.Console.WriteLine("Running {0} with input {1}", lastPuzzle.type.Name, input.FullName);
 
-System.Console.WriteLine("Running {0}", lastPuzzleType.Name);
-puzzle.Excute();
+puzzle.Excute(input);

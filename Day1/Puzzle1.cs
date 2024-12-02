@@ -1,10 +1,10 @@
 using static System.Math;
 class Puzzle1 : IPuzzle
 {
-    public void Excute()
+    public void Excute(FileInfo input)
     {
         var lines = sample.Split("\r\n");
-        lines = File.ReadAllLines("Day1\\input.txt");
+        lines = File.ReadAllLines(input.FullName);
 
         var left = lines.Select(a => a.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0]).Select(int.Parse).ToList();
         var right = lines.Select(a => a.Split(' ', StringSplitOptions.RemoveEmptyEntries)[1]).Select(int.Parse).ToList();
