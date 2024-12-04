@@ -1,8 +1,7 @@
 // #define Sample
-
 using System.Collections.Immutable;
-using static System.Math;
-class Puzzle2 : IPuzzle
+
+public class Puzzle2 : IPuzzle
 {
 
     const int Increasing = 1;
