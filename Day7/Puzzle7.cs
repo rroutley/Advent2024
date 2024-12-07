@@ -1,4 +1,4 @@
-// #define Sample
+//#define Sample
 
 public class Puzzle7 : IPuzzle
 {
@@ -12,6 +12,19 @@ public class Puzzle7 : IPuzzle
 #endif
 
 
+        long result = Compute(lines, 2);
+
+        System.Console.WriteLine("Part 1 = {0}", result);
+
+
+        result = Compute(lines, 3);
+
+        System.Console.WriteLine("Part 2 = {0}", result);
+
+    }
+
+    private long Compute(string[] lines, int operators)
+    {
         long result = 0;
         foreach (var line in lines)
         {
@@ -21,45 +34,52 @@ public class Puzzle7 : IPuzzle
             var numbers = right.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToArray();
 
             bool hasSolution = false;
-            foreach (var solution in Solutions(ans, numbers))
+            foreach (var solution in Solutions(ans, numbers, operators))
             {
                 System.Console.WriteLine(solution);
                 hasSolution = true;
+              //  break;
             }
 
             if (hasSolution)
                 result += ans;
         }
 
-        System.Console.WriteLine("Part 1 = {0}", result);
-
+        return result;
     }
 
-    private IEnumerable<string> Solutions(long ans, int[] numbers)
+    private IEnumerable<string> Solutions(long ans, int[] numbers, int operators)
     {
         var operatorsNeeded = numbers.Length - 1;
-        // Only two operations so use binary
-        var combinations = 1 << operatorsNeeded;
+        var combinations = (int)Math.Pow(operators, operatorsNeeded);
 
         for (int i = 0; i < combinations; i++)
         {
             long result = numbers[0];
             var solution = $"{ans} = {numbers[0]}";
-            var bitPattern = i;
+
+            var combination = i;
             for (int j = 0; j < operatorsNeeded; j++)
             {
-                var bit = bitPattern & 1;
-                bitPattern >>= 1;
+                var @operator = combination % operators;
+                combination /= operators;
 
-                if (bit == 0)
+                if (@operator == 0)
                 {
                     result += numbers[j + 1];
                     solution += " + ";
                 }
-                else
+                else if (@operator == 1)
                 {
                     result *= numbers[j + 1];
                     solution += " * ";
+                }
+                else
+                {
+                    long concat = long.Parse(result.ToString() + numbers[j + 1].ToString());
+                    result = concat;
+
+                    solution += " || ";
                 }
                 solution += numbers[j + 1];
             }
@@ -69,8 +89,6 @@ public class Puzzle7 : IPuzzle
                 yield return solution;
             }
         }
-
-
     }
 
     private string sample = """
