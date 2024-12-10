@@ -1,19 +1,18 @@
 // #define Sample
 
-using System.Drawing;
 using Point2d = (int x, int y);
 public class Puzzle10 : IPuzzle
 {
+    private int _rows;
+    private int _cols;
 
-    int rows;
-    int cols;
-
-    int[][] directions = [
-        [0,-1],
-        [1,0],
-        [0,1],
-        [-1,0]
+    private readonly Point2d[] _directions = [
+        (0,-1),
+        (1,0),
+        (0,1),
+        (-1,0)
     ];
+
     public void Excute(FileInfo input)
     {
 #if Sample
@@ -22,35 +21,11 @@ public class Puzzle10 : IPuzzle
         var lines = File.ReadAllLines(input.FullName);
 #endif
 
-        rows = lines.Length;
-        cols = lines[0].Length;
+        var grid = ParseGrid(lines);
 
-        int[,] grid = new int[cols, rows];
+        var trailHeads = FindTrailHeads(grid);
 
-        for (int r = 0; r < rows; r++)
-            for (int c = 0; c < cols; c++)
-                grid[c, r] = char.IsDigit(lines[r][c]) ? lines[r][c] - 48 : -1;
-
-
-        var trailHeads = new List<Point2d>();
-        for (int r = 0; r < rows; r++)
-            for (int c = 0; c < cols; c++)
-                if (grid[c, r] == 0)
-                    trailHeads.Add((c, r));
-
-
-        System.Console.WriteLine("Render");
-        for (int r = 0; r < rows; r++)
-        {
-            for (int c = 0; c < cols; c++)
-            {
-                if (grid[c, r] < 0)
-                    System.Console.Write('.');
-                else
-                    System.Console.Write(grid[c, r]);
-            }
-            System.Console.WriteLine();
-        }
+        Render(grid);
 
         long result = 0;
         foreach (var head in trailHeads)
@@ -59,10 +34,10 @@ public class Puzzle10 : IPuzzle
 
             result += peaks;
 
-            System.Console.WriteLine($"Head {head} has {peaks} peaks");
+            Console.WriteLine($"Head {head} has {peaks} peaks");
         }
 
-        System.Console.WriteLine("Part 1 = {0}", result);
+        Console.WriteLine("Part 1 = {0}", result);
 
 
         result = 0;
@@ -72,10 +47,49 @@ public class Puzzle10 : IPuzzle
 
             result += routes;
 
-            System.Console.WriteLine($"Head {head} has {routes} routes");
+            Console.WriteLine($"Head {head} has {routes} routes");
         }
-        System.Console.WriteLine("Part 2 = {0}", result);
+        Console.WriteLine("Part 2 = {0}", result);
 
+    }
+
+    private int[,] ParseGrid(string[] lines)
+    {
+        _rows = lines.Length;
+        _cols = lines[0].Length;
+
+        int[,] grid = new int[_cols, _rows];
+
+        for (int r = 0; r < _rows; r++)
+            for (int c = 0; c < _cols; c++)
+                grid[c, r] = char.IsDigit(lines[r][c]) ? lines[r][c] - 48 : -1;
+        return grid;
+    }
+
+    private List<(int x, int y)> FindTrailHeads(int[,] grid)
+    {
+        var trailHeads = new List<Point2d>();
+        for (int r = 0; r < _rows; r++)
+            for (int c = 0; c < _cols; c++)
+                if (grid[c, r] == 0)
+                    trailHeads.Add((c, r));
+        return trailHeads;
+    }
+
+    private void Render(int[,] grid)
+    {
+        Console.WriteLine("Render");
+        for (int r = 0; r < _rows; r++)
+        {
+            for (int c = 0; c < _cols; c++)
+            {
+                if (grid[c, r] < 0)
+                    Console.Write('.');
+                else
+                    Console.Write(grid[c, r]);
+            }
+            Console.WriteLine();
+        }
     }
 
     private IEnumerable<Point2d> FindRoutes(int[,] grid, Point2d head)
@@ -94,11 +108,11 @@ public class Puzzle10 : IPuzzle
                 yield return position;
             }
 
-            foreach (var direction in directions)
+            foreach (var (dx, dy) in _directions)
             {
-                Point2d next = (position.x + direction[0], position.y + direction[1]);
+                Point2d next = (position.x + dx, position.y + dy);
 
-                if (next.x < 0 || next.x >= cols || next.y < 0 || next.y >= rows)
+                if (next.x < 0 || next.x >= _cols || next.y < 0 || next.y >= _rows)
                     continue;
 
 
