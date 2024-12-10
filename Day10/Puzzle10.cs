@@ -55,7 +55,7 @@ public class Puzzle10 : IPuzzle
         long result = 0;
         foreach (var head in trailHeads)
         {
-            var peaks = FindRoutes(grid, head).Count();
+            var peaks = FindRoutes(grid, head).Distinct().Count();
 
             result += peaks;
 
@@ -65,15 +65,21 @@ public class Puzzle10 : IPuzzle
         System.Console.WriteLine("Part 1 = {0}", result);
 
 
+        result = 0;
+        foreach (var head in trailHeads)
+        {
+            var routes = FindRoutes(grid, head).Count();
 
+            result += routes;
+
+            System.Console.WriteLine($"Head {head} has {routes} routes");
+        }
         System.Console.WriteLine("Part 2 = {0}", result);
 
     }
 
     private IEnumerable<Point2d> FindRoutes(int[,] grid, Point2d head)
     {
-        var visited = new HashSet<Point2d>();
-
         var queue = new Queue<Point2d>();
         queue.Enqueue(head);
 
@@ -83,7 +89,7 @@ public class Puzzle10 : IPuzzle
             var position = state;
             var height = grid[position.x, position.y];
 
-            if (height == 9 && visited.Add(position))
+            if (height == 9)
             {
                 yield return position;
             }
@@ -95,7 +101,7 @@ public class Puzzle10 : IPuzzle
                 if (next.x < 0 || next.x >= cols || next.y < 0 || next.y >= rows)
                     continue;
 
-          
+
                 if (grid[next.x, next.y] == height + 1)
                 {
                     queue.Enqueue(next);
