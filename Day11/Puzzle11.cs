@@ -12,29 +12,38 @@ public class Puzzle11 : IPuzzle
         var lines = File.ReadAllLines(input.FullName);
 #endif
 
-        var arrangement = lines[0].Split(' ').Select(long.Parse).ToList();
+        var arrangement = lines[0].Split(' ').Select(long.Parse);
 
         Render(arrangement);
 
         for (int i = 0; i < 25; i++)
         {
-            Console.Write($"Blink {i+1}");
+            Console.Write($"Blink {i + 1}: ");
             arrangement = Blink(arrangement).ToList();
             if (i < 6)
             {
                 Render(arrangement);
             }
-            Console.WriteLine($". {arrangement.Count} stones");
+            Console.WriteLine($". {arrangement.Count()} stones");
         }
 
-        long result = arrangement.Count;
+        long result = arrangement.Count();
 
         Console.WriteLine("Part 1 = {0}", result);
 
 
+        var freqs = arrangement.GroupBy(s => s).Select(s => new Freq(s.Key, s.Count()));
+
+        for (int i = 25; i < 75; i++)
+        {
+            Console.Write($"Blink {i + 1}: ");
+            freqs = Blink(freqs).GroupBy(s => s.Value).Select(s => new Freq(s.Key, s.Select(c => c.Count).Sum()));
+
+            Console.WriteLine($". {freqs.Select(x => x.Count).Sum()} stones");
+        }
 
 
-        Console.WriteLine("Part 2 = {0}", result);
+        Console.WriteLine("Part 2 = {0}", freqs.Select(x => x.Count).Sum());
 
     }
 
@@ -48,7 +57,7 @@ public class Puzzle11 : IPuzzle
         Console.WriteLine();
     }
 
-    private IEnumerable<long> Blink(IList<long> arrangement)
+    private IEnumerable<long> Blink(IEnumerable<long> arrangement)
     {
         foreach (var stone in arrangement)
         {
@@ -56,17 +65,50 @@ public class Puzzle11 : IPuzzle
             {
                 yield return 1;
             }
-            else if (stone.ToString().Length % 2 == 0)
+            else
             {
-                var text = stone.ToString();
-                var half = text.Length / 2;
-                yield return long.Parse(text[..half]);
-                yield return long.Parse(text[half..]);
+                var text = stone.ToString().AsSpan();
+                if (text.Length % 2 == 0)
+                {
+                    var half = text.Length / 2;
+                    long v1 = long.Parse(text[..half]);
+                    long v2 = long.Parse(text[half..]);
+                    yield return v1;
+                    yield return v2;
 
+                }
+                else
+                {
+                    yield return stone * 2024;
+                }
+            }
+        }
+    }
+
+    private IEnumerable<Freq> Blink(IEnumerable<Freq> arrangement)
+    {
+        foreach (var stone in arrangement)
+        {
+            if (stone.Value == 0)
+            {
+                yield return new Freq(1, stone.Count);
             }
             else
             {
-                yield return stone * 2024;
+                var text = stone.Value.ToString().AsSpan();
+                if (text.Length % 2 == 0)
+                {
+                    var half = text.Length / 2;
+                    long v1 = long.Parse(text[..half]);
+                    long v2 = long.Parse(text[half..]);
+                    yield return new Freq(v1, stone.Count);
+                    yield return new Freq(v2, stone.Count);
+
+                }
+                else
+                {
+                    yield return new Freq(stone.Value * 2024, stone.Count);
+                }
             }
         }
     }
@@ -74,4 +116,6 @@ public class Puzzle11 : IPuzzle
     private string sample = """
 125 17
 """;
+
+    private record class Freq(long Value, long Count);
 }
