@@ -1,6 +1,6 @@
 // #define Sample
 
-using Vector2d = (int x, int y);
+using Vector2d = (long x, long y);
 
 using System.Text.RegularExpressions;
 
@@ -15,17 +15,17 @@ public class Puzzle13 : IPuzzle
         var lines = File.ReadAllText(input.FullName);
 #endif
 
-        List<Claw> claws = Parse(lines);
+        List<Claw> claws = Parse(lines, 0);
 
         long result = 0;
         foreach (var claw in claws)
         {
             System.Console.WriteLine($"a={claw.ButtonA} b={claw.ButtonB} p={claw.Prize}");
 
-            var minA = 1; //Math.Min(int.MaxValue, p.x / Math.Min(a.x, b.x));
-            var minB = 1; //Math.Min(int.MaxValue, p.y / Math.Min(a.y, b.y));
-            var maxA = 100; //p.x / Math.Max(a.x, b.x);
-            var maxB = 100; //p.y / Math.Max(a.y, b.y);
+            var minA = 1;
+            var minB = 1;
+            var maxA = 100;
+            var maxB = 100;
 
             var minCost = int.MaxValue;
             for (int a = minA; a <= maxA; a++)
@@ -45,27 +45,6 @@ public class Puzzle13 : IPuzzle
 
                 }
             }
-            
-            // for (int a = minX; a <= maxX; a++)
-            // {
-            //     int remindingX = prize.x - buttonA.x * a;
-            //     if (remindingX > 0 && remindingX % buttonB.x == 0)
-            //     {
-            //         int remainingY = prize.y - buttonA.y * a;
-            //         int b = remindingX / buttonB.x;
-
-            //         if (remainingY > 0 && remainingY % buttonB.y == 0 && b <= 100)
-            //         {
-            //             var cost = a * 3 + b;
-            //             if (cost < minCost)
-            //             {
-            //                 minCost = cost;
-            //                 System.Console.WriteLine($"Button A * {a} and B * {b}");
-            //             }
-            //         }
-
-            //     }
-            // }
 
             if (minCost < int.MaxValue)
             {
@@ -74,17 +53,35 @@ public class Puzzle13 : IPuzzle
 
         }
 
-
-
         System.Console.WriteLine("Part 1 = {0}", result);
 
+        claws = Parse(lines, 10000000000000);
+        result = 0;
+        foreach (var claw in claws)
+        {
+            System.Console.WriteLine($"a={claw.ButtonA} b={claw.ButtonB} p={claw.Prize}");
 
+            var determinant = claw.ButtonA.x * claw.ButtonB.y - claw.ButtonB.x * claw.ButtonA.y;
+
+            var a = claw.Prize.x * claw.ButtonB.y / determinant - claw.Prize.y * claw.ButtonB.x / determinant;
+            var b = -claw.Prize.x * claw.ButtonA.y / determinant + claw.Prize.y * claw.ButtonA.x / determinant;
+
+            if (a * claw.ButtonA.x + b * claw.ButtonB.x == claw.Prize.x
+                && a * claw.ButtonA.y + b * claw.ButtonB.y == claw.Prize.y)
+            {
+                var cost = a * 3 + b;
+                System.Console.WriteLine($"Button A * {a} and B * {b}");
+
+                result += cost;
+            }
+
+        }
 
         System.Console.WriteLine("Part 2 = {0}", result);
 
     }
 
-    private static List<Claw> Parse(string lines)
+    private static List<Claw> Parse(string lines, long extra)
     {
         var pattern = """
 Button A: X\+(\d+), Y\+(\d+)[\n|\r]*
@@ -99,7 +96,7 @@ Prize: X=(\d+), Y=(\d+)
         {
             Vector2d buttonA = (int.Parse(match.Groups[1].Value), int.Parse(match.Groups[2].Value));
             Vector2d buttonB = (int.Parse(match.Groups[3].Value), int.Parse(match.Groups[4].Value));
-            Vector2d prize = (int.Parse(match.Groups[5].Value), int.Parse(match.Groups[6].Value));
+            Vector2d prize = (extra + int.Parse(match.Groups[5].Value), extra + int.Parse(match.Groups[6].Value));
 
             claws.Add(new Claw(buttonA, buttonB, prize));
 
