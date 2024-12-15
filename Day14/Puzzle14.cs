@@ -24,7 +24,7 @@ public class Puzzle14 : IPuzzle
 
         var robots = Parse(lines);
 
-        Plot(robots);
+        Plot(robots, Console.Out);
 
         for (int i = 0; i < 100; i++)
         {
@@ -34,7 +34,7 @@ public class Puzzle14 : IPuzzle
             }
         }
 
-        Plot(robots);
+        Plot(robots, Console.Out);
 
         Point2d centre = (_cols / 2, _rows / 2);
 
@@ -52,27 +52,50 @@ public class Puzzle14 : IPuzzle
 
 
 
+        using var writer = File.CreateText(Path.Combine(input.DirectoryName, "output.txt"));
+
+        robots = Parse(lines);
+        var robotCount = robots.Count;
+        long s = 0;
+        for (int i = 0; i < _rows * _cols; i++)
+        {
+            foreach (var robot in robots)
+                robot.Update();
+
+            s++;
+
+            // Does the Chrustmas tree emerge when there are no overlaps?
+            if (robots.Select(r => r.Position).Distinct().Count() == robotCount)
+            {
+                writer.WriteLine($"Seconds = {s}");
+                Plot(robots, writer);
+                writer.WriteLine();
+            }
+        }
+
+
+
         Console.WriteLine("Part 2 = {0}", result);
 
     }
 
-    private void Plot(List<Robot> robots)
+    private void Plot(List<Robot> robots, TextWriter writer)
     {
-        Console.WriteLine(string.Empty.PadRight(50, '='));
+        writer.WriteLine(string.Empty.PadRight(50, '='));
         for (int r = 0; r < _rows; r++)
         {
-            Console.Write($"{r:000} ");
+            writer.Write($"{r:000} ");
             for (int c = 0; c < _cols; c++)
             {
                 Point2d pos = (c, r);
                 var count = robots.Count(r => r.Position == pos);
                 if (count == 0)
-                    Console.Write('.');
+                    writer.Write('.');
                 else
-                    Console.Write(count);
+                    writer.Write(count);
 
             }
-            Console.WriteLine();
+            writer.WriteLine();
         }
     }
 
@@ -82,7 +105,7 @@ public class Puzzle14 : IPuzzle
         foreach (var line in lines)
         {
             var match = Regex.Match(line, @"p=(\d+),(\d+) v=(-?\d+),(-?\d+)");
-            
+
             Point2d position = (int.Parse(match.Groups[1].Value), int.Parse(match.Groups[2].Value));
             Vector2d velocity = (int.Parse(match.Groups[3].Value), int.Parse(match.Groups[4].Value));
 
