@@ -31,15 +31,26 @@ public class Puzzle15 : IPuzzle
 
         Render(grid, robot, "End");
 
-
-
-
         long result = Score(grid);
 
         System.Console.WriteLine("Part 1 = {0}", result);
 
 
 
+        Console.Clear();
+
+        grid = ParseGridWide(lines, out robot);
+
+        Render(grid, robot, "Part2 Start");
+
+        foreach (var instr in instructions)
+        {
+            robot = MoveWide(grid, robot, instr);
+            Render(grid, robot, instr.ToString());
+        }
+
+        Render(grid, robot, "Part2 End");
+        result = Score(grid);
         System.Console.WriteLine("Part 2 = {0}", result);
 
     }
@@ -49,7 +60,7 @@ public class Puzzle15 : IPuzzle
         long score = 0;
         for (int r = 0; r < _rows; r++)
             for (int c = 0; c < _cols; c++)
-                if (grid[r][c] == 'O')
+                if (grid[r][c] == 'O' || grid[r][c] == '[')
                     score += r * 100 + c;
 
         return score;
@@ -108,6 +119,96 @@ public class Puzzle15 : IPuzzle
         }
     }
 
+
+    private Point2d MoveWide(List<char[]> grid, Point2d robot, char instr)
+    {
+        if (instr == '<' || instr == '>')
+            return Move(grid, robot, instr);
+
+
+        var direction = instr switch
+        {
+            '^' => N,
+            'v' => S,
+            _ => throw new UnreachableException(),
+        };
+
+        if (!CanMove(robot, instr))
+        {
+            return robot;
+        }
+
+        MakeMove(robot, instr);
+        grid[robot.y][robot.x] = '.';
+
+        return (robot.x + direction.x, robot.y + direction.y);
+
+
+
+        bool CanMove(Point2d start, char instr)
+        {
+            var j = instr == '^' ? -1 : 1;
+            (int x, int y) = (start.x, start.y + j);
+
+            char v = grid[y][x];
+            if (v == '#')
+            {
+                // Blocked
+                return false;
+            }
+            else if (v == '.')
+            {
+                // Done
+                return true;
+            }
+            else if (v == '[')
+            {
+                return CanMove((x, y), instr) && CanMove((x + 1, y), instr);
+            }
+            else if (v == ']')
+            {
+                return CanMove((x - 1, y), instr) && CanMove((x, y), instr);
+            }
+            throw new UnreachableException();
+        }
+
+        void MakeMove(Point2d start, char instr)
+        {
+            var j = instr == '^' ? -1 : 1;
+            (int x, int y) = (start.x, start.y + j);
+
+            char v = grid[y][x];
+            if (v == '#')
+            {
+                // Blocked
+                throw new Exception();
+            }
+            else if (v == '.')
+            {
+                // Done
+                grid[y][x] = grid[start.y][x];
+                return;
+            }
+            else if (v == '[')
+            {
+                MakeMove((x, y), instr);
+                MakeMove((x + 1, y), instr);
+                grid[y][x] = grid[start.y][x];
+                grid[y][x + 1] = '.';
+                return;
+            }
+            else if (v == ']')
+            {
+                MakeMove((x, y), instr);
+                MakeMove((x - 1, y), instr);
+                grid[y][x] = grid[start.y][x];
+                grid[y][x - 1] = '.';
+
+                return;
+            }
+            throw new UnreachableException();
+        }
+    }
     private List<char[]> ParseGrid(string[] lines, out Point2d robot)
     {
         robot = (0, 0);
@@ -135,6 +236,52 @@ public class Puzzle15 : IPuzzle
         return grid;
     }
 
+
+
+    private List<char[]> ParseGridWide(string[] lines, out Point2d robot)
+    {
+        robot = (0, 0);
+        _cols = lines[0].Length * 2;
+        var grid = new List<char[]>();
+
+        for (int r = 0; r < lines.Length; r++)
+        {
+            string line = lines[r];
+            if (line == string.Empty)
+                break;
+
+            var row = new char[_cols];
+            for (int c = 0; c < line.Length; c++)
+            {
+                var v = line[c];
+                switch (v)
+                {
+                    case '#':
+                        row[2 * c] = '#';
+                        row[2 * c + 1] = '#';
+                        break;
+                    case '.':
+                        row[2 * c] = '.';
+                        row[2 * c + 1] = '.';
+                        break;
+                    case 'O':
+                        row[2 * c] = '[';
+                        row[2 * c + 1] = ']';
+                        break;
+                    case '@':
+                        robot = (2 * c, r);
+                        row[2 * c] = '@';
+                        row[2 * c + 1] = '.';
+                        break;
+                }
+            }
+            grid.Add(row);
+        }
+        _rows = grid.Count;
+
+        return grid;
+    }
+
     private List<char> ParseInstructions(string[] lines)
     {
         var instructions = new List<char>();
@@ -148,6 +295,8 @@ public class Puzzle15 : IPuzzle
 
     private void Render(List<char[]> grid, Point2d robot, string caption)
     {
+
+        Console.SetCursorPosition(0, 0);
         System.Console.WriteLine(caption);
         System.Console.WriteLine(string.Empty.PadRight(50, '-'));
 
