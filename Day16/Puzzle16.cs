@@ -1,5 +1,6 @@
 //#define Sample
 
+using System.Diagnostics;
 using Point2d = (int x, int y);
 
 public class Puzzle16 : IPuzzle
@@ -46,77 +47,104 @@ public class Puzzle16 : IPuzzle
             }
         }
 
+
+        long result = PathToEnd(grid, start, heading, end); ;
+
+
         Render(grid);
 
-        PathToEnd(grid, start, heading, end);
-
-
-        long result = 0;
-
         System.Console.WriteLine("Part 1 = {0}", result);
-
+        // 105512 is too high
 
 
         System.Console.WriteLine("Part 2 = {0}", result);
 
     }
 
-    private void PathToEnd(char[,] grid, Point2d start, Point2d initialHeading, Point2d end)
+    private int PathToEnd(char[,] grid, Point2d start, Point2d initialHeading, Point2d end)
     {
-        var queue = new Queue<State>();
-        queue.Enqueue(new State(start, initialHeading, 0, 0, []));
-        //HashSet<(Point2d, Point2d)> visited = new();
+        var queue = new PriorityQueue<Point2d, int>();
+        queue.Enqueue(start, 0);
 
-        int minCost = int.MaxValue;
+        var distance = new Dictionary<Point2d, int>();
+        var prev = new Dictionary<Point2d, Point2d>
+        {
+            // Set "previous" for the start to be West of start so initial heading will be East
+            [start] = (start.x - initialHeading.x, start.y - initialHeading.y)
+        };
+
+        for (int r = 0; r < _rows; r++)
+        {
+            for (int c = 0; c < _cols; c++)
+            {
+                if (grid[c, r] == '.')
+                {
+                    distance[(c, r)] = int.MaxValue;
+                    queue.Enqueue((c, r), int.MaxValue);
+                }
+            }
+        }
+        distance[start] = 0;
 
         while (queue.Count > 0)
         {
-            var state = queue.Dequeue();
+            var current = queue.Dequeue();
+            Point2d heading = (current.x - prev[current].x, current.y - prev[current].y);
 
-            var current = state.Position;
-            var heading = state.Heading;
-            var visited = state.visited;
-            if (!visited.Add((current, heading)))
-                continue;
-
-            if (current == end)
-            {
-                int score = 1000 * state.turns + state.steps;
-
-                if (score < minCost)
-                {
-                    minCost = score;
-                    System.Console.WriteLine($"steps={state.steps} turns={state.turns} score={score}");
-                }
-            }
+            Debug.Assert(Math.Abs(heading.x) + Math.Abs(heading.y) == 1);
 
             Point2d ahead = (current.x + heading.x, current.y + heading.y);
             if (grid[ahead.x, ahead.y] == '.')
             {
-                queue.Enqueue(new State(ahead, heading, state.steps + 1, state.turns, [.. visited]));
+                var alt = distance[current] + 1;
+                if (alt < distance[ahead])
+                {
+                    prev[ahead] = current;
+                    distance[ahead] = alt;
+                    queue.Remove(ahead, out _, out _);
+                    queue.Enqueue(ahead, alt);
+                }
             }
 
             Point2d clockwise = (current.x + heading.y, current.y + heading.x);
             if (grid[clockwise.x, clockwise.y] == '.')
             {
-                queue.Enqueue(new State(current, (heading.y, heading.x), state.steps, state.turns + 1, [.. visited]));
+                var alt = distance[current] + 1001;
+                if (alt < distance[clockwise])
+                {
+                    prev[clockwise] = current;
+                    distance[clockwise] = alt;
+                    queue.Remove(clockwise, out _, out _);
+                    queue.Enqueue(clockwise, alt);
+                }
             }
 
             Point2d counterClockwise = (current.x - heading.y, current.y - heading.x);
             if (grid[counterClockwise.x, counterClockwise.y] == '.')
             {
-                queue.Enqueue(new State(current, (-heading.y, -heading.x), state.steps, state.turns + 1, [.. visited]));
+                var alt = distance[current] + 1001;
+                if (alt < distance[counterClockwise])
+                {
+                    prev[counterClockwise] = current;
+                    distance[counterClockwise] = alt;
+                    queue.Remove(counterClockwise, out _, out _);
+                    queue.Enqueue(counterClockwise, alt);
+                }
             }
-
-
         }
 
+        // Retrace path
+        var x = end;
+        while (x != start)
+        {
+            grid[x.x, x.y] = 'o';
+            x = prev[x];
+        }
 
-
-
+        return distance[end];
     }
 
-    record State(Point2d Position, Point2d Heading, int steps, int turns, HashSet<(Point2d, Point2d)> visited);
+
     private void Render(char[,] grid)
     {
         System.Console.WriteLine(string.Empty.PadRight(50, '-'));
@@ -132,22 +160,20 @@ public class Puzzle16 : IPuzzle
     }
 
     private string sample = """
-#################
-#...#...#...#..E#
-#.#.#.#.#.#.#.#.#
-#.#.#.#...#...#.#
-#.#.#.#.###.#.#.#
-#...#.#.#.....#.#
-#.#.#.#.#.#####.#
-#.#...#.#.#.....#
-#.#.#####.#.###.#
-#.#.#.......#...#
-#.#.###.#####.###
-#.#.#...#.....#.#
-#.#.#.#####.###.#
-#.#.#.........#.#
-#.#.#.#########.#
-#S#.............#
-################# 
+###############
+#.......#....E#
+#.#.###.#.###.#
+#.....#.#...#.#
+#.###.#####.#.#
+#.#.#.......#.#
+#.#.#####.###.#
+#...........#.#
+###.#.#####.#.#
+#...#.....#.#.#
+#.#.#.###.#.#.#
+#.....#...#.#.#
+#.###.#.#.#.#.#
+#S..#.....#...#
+###############
 """;
 }
