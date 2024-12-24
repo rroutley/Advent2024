@@ -24,6 +24,6 @@ public class Puzzle0 : IPuzzle
 
 
     private string sample = """
-    
+
 """;
 }
